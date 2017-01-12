@@ -92,3 +92,4 @@ ENV/
 plugin.video.kodi_watchlist.iml
 install.sh
 key.txt
+test.py
