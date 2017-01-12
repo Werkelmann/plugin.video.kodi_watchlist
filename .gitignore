@@ -87,3 +87,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+.idea
+plugin.video.kodi_watchlist.iml
+install.sh
