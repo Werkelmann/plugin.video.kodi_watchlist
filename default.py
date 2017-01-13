@@ -7,7 +7,7 @@ import xbmcgui
 import xbmcplugin
 
 
-SETTING_REQ_TOK = 'req_tok'
+SETTING_SESSION_ID = 'session_id'
 
 addon_handle = int(sys.argv[1])
 xbmcplugin.setContent(addon_handle, 'movies')
@@ -15,6 +15,7 @@ __addon__ = xbmcaddon.Addon()
 __addonname__ = __addon__.getAddonInfo('name')
 
 
+# Read TheMovieDB-API-Key from plugin source
 def get_key_path():
     root_path = xbmc.translatePath('special://home')
     if xbmc.getCondVisibility('system.platform.windows'):
@@ -25,6 +26,7 @@ def get_key_path():
 apiKey = open(get_key_path()).read().rstrip()
 
 
+# API-Wrapper
 def get_api_root():
     return 'https://api.themoviedb.org/3/'
 
@@ -54,14 +56,23 @@ def get_session_id(req_tok):
     return get_value_from_response(session_url, 'session_id')
 
 
-if xbmcplugin.getSetting(addon_handle, SETTING_REQ_TOK) == '':
+# init a session id for the user
+session_id = ''
+if xbmcplugin.getSetting(addon_handle, SETTING_SESSION_ID) == '':
     req_tok = get_request_token()
-    xbmcplugin.setSetting(addon_handle, id=SETTING_REQ_TOK, value=req_tok)  # TODO why does it not save the setting?
     xbmcgui.Dialog().ok(__addonname__, 'Call https://www.themoviedb.org/authenticate/ ' + req_tok
-                        + ' from your browser and validate the token and add it in the settings')
+                        + ' from your browser and validate the token')
+    try:
+        session_id = get_session_id(req_tok)
+    except urllib2.HTTPError:
+        xbmcgui.Dialog().ok(__addonname__, 'Token was not successfully allowed')
+        xbmcplugin.endOfDirectory(addon_handle)
+    xbmcgui.Dialog().ok(__addonname__, 'Save the following to your settings: ' + session_id
+                        + ". Then restart the plugin")
+    xbmcplugin.endOfDirectory(addon_handle)
+else:
+    session_id = xbmcplugin.getSetting(addon_handle, SETTING_SESSION_ID)
 
-req_token = xbmcplugin.getSetting(addon_handle, SETTING_REQ_TOK)
-session_id = get_session_id(req_token)
 
 # following from example:
 url = 'http://localhost/some_video.mkv'
