@@ -51,9 +51,19 @@ def get_request_token():
     return get_value_from_response(token_url, 'request_token')
 
 
+def get_query_string_postfix(name, value):
+    return '&{name}={value}'.format(name=name, value=value)
+
+
 def get_session_id(req_tok):
-    session_url = build_api_url('authentication/session/new') + '&request_token=' + req_tok
+    session_url = build_api_url('authentication/session/new') + get_query_string_postfix('request_token', req_tok)
     return get_value_from_response(session_url, 'session_id')
+
+
+def get_movie_watchlist(session_id):
+    movie_watchlist_url = build_api_url('account/{account_id}/watchlist/movies') \
+                          + get_query_string_postfix('session_id', session_id)
+    return get_value_from_response(movie_watchlist_url, 'results')
 
 
 # init a session id for the user
@@ -64,19 +74,19 @@ if xbmcplugin.getSetting(addon_handle, SETTING_SESSION_ID) == '':
                         + ' from your browser and validate the token')
     try:
         session_id = get_session_id(req_tok)
+        xbmcgui.Dialog().ok(__addonname__, 'Save the following to your settings: ' + session_id
+                            + ". Then restart the plugin")
     except urllib2.HTTPError:
         xbmcgui.Dialog().ok(__addonname__, 'Token was not successfully allowed')
         xbmcplugin.endOfDirectory(addon_handle)
-    xbmcgui.Dialog().ok(__addonname__, 'Save the following to your settings: ' + session_id
-                        + ". Then restart the plugin")
     xbmcplugin.endOfDirectory(addon_handle)
 else:
     session_id = xbmcplugin.getSetting(addon_handle, SETTING_SESSION_ID)
 
-
-# following from example:
-url = 'http://localhost/some_video.mkv'
-li = xbmcgui.ListItem(session_id, iconImage='DefaultVideo.png')
-xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
+# get watchlist
+movie_watchlist = get_movie_watchlist(session_id)
+for movie in movie_watchlist:
+    li = xbmcgui.ListItem(movie['title'], iconImage='DefaultVideo.png')
+    xbmcplugin.addDirectoryItem(handle=addon_handle, url='', listitem=li)
 
 xbmcplugin.endOfDirectory(addon_handle)
