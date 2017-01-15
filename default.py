@@ -116,13 +116,15 @@ elif mode[0] == 'folder':
     folder_name = args['foldername'][0]
     if folder_name == 'movies':
         movie_watchlist = get_movie_watchlist(session_id)
+        movie_watchlist = sorted(movie_watchlist, key=lambda x: x['title'])
         for movie in movie_watchlist:
             li = xbmcgui.ListItem(movie['title'], iconImage='DefaultVideo.png')
             xbmcplugin.addDirectoryItem(handle=addon_handle, url='', listitem=li)
-            xbmcplugin.endOfDirectory(addon_handle)
     elif folder_name == 'shows':
         tv_watchlist = get_tv_watchlist(session_id)
+        tv_watchlist = sorted(tv_watchlist, key=lambda x: x['name'])
         for tv in tv_watchlist:
             li = xbmcgui.ListItem(tv['name'], iconImage='DefaultVideo.png')
             xbmcplugin.addDirectoryItem(handle=addon_handle, url='', listitem=li)
-            xbmcplugin.endOfDirectory(addon_handle)
+
+xbmcplugin.endOfDirectory(addon_handle)
