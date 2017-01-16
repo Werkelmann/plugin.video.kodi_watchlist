@@ -9,6 +9,7 @@ import xbmcgui
 import xbmcplugin
 from api_wrapper import Wrapper
 from library_wrapper import Library
+from difflib import SequenceMatcher as SeqMatcher
 
 SETTING_SESSION_ID = 'session_id'
 
@@ -56,11 +57,24 @@ def build_url(query):
 
 def add_movie_to_list(movie, movies_in_library):
     icon_image = 'DefaultVideo.png'
+    path_to_file = ''
     for movie_in_lib in movies_in_library['result']['movies']:
-        if movie['title'] == movie_in_lib['title']:
+        if SeqMatcher(None, movie['title'], movie_in_lib['title']).ratio() > 0.9:
             icon_image = movie_in_lib['thumbnail']
-    li = xbmcgui.ListItem(movie['title'], iconImage=icon_image)
-    xbmcplugin.addDirectoryItem(handle=addon_handle, url='', listitem=li)
+            path_to_file = movie_in_lib['file']
+    li = xbmcgui.ListItem(movie['title'], thumbnailImage=icon_image, path=path_to_file)
+    xbmcplugin.addDirectoryItem(handle=addon_handle, url=path_to_file, listitem=li)
+
+
+def add_show_to_list(show, shows_in_library):
+    icon_image = 'DefaultVideo.png'
+    path_to_file = ''
+    for show_in_lib in shows_in_library['result']['tvshows']:
+        if SeqMatcher(None, show['name'], show_in_lib['title']).ratio() > 0.9:
+            icon_image = show_in_lib['thumbnail']
+            path_to_file = show_in_lib['file']
+    li = xbmcgui.ListItem(show['name'], thumbnailImage=icon_image, path=path_to_file)
+    xbmcplugin.addDirectoryItem(handle=addon_handle, url=path_to_file, listitem=li, isFolder=True)
 
 args = urlparse.parse_qs(sys.argv[2][1:])
 mode = args.get('mode', None)
@@ -85,10 +99,10 @@ elif mode[0] == 'folder':
             add_movie_to_list(movie, movies_in_library)
     elif folder_name == 'shows':
         tv_watchlist = moviedb.get_sorted_tv_watchlist(session_id)
-        for tv in tv_watchlist:
-            li = xbmcgui.ListItem(tv['name'], iconImage='DefaultVideo.png')
-            xbmcplugin.addDirectoryItem(handle=addon_handle, url='', listitem=li)
+        shows_in_library = library.get_shows()
+        for show in tv_watchlist:
+            add_show_to_list(show, shows_in_library)
 
 # for movie in library.get_movies()['result']['movies']:
-#     xbmcgui.Dialog().ok(__addonname__, json.dumps(movie))
+# xbmcgui.Dialog().ok(__addonname__, json.dumps(library.get_shows()))
 xbmcplugin.endOfDirectory(addon_handle)
