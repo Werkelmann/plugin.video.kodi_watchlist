@@ -54,6 +54,14 @@ def build_url(query):
     return base_url + '?' + urllib.urlencode(query)
 
 
+def add_movie_to_list(movie, movies_in_library):
+    icon_image = 'DefaultVideo.png'
+    for movie_in_lib in movies_in_library['result']['movies']:
+        if movie['title'] == movie_in_lib['title']:
+            icon_image = movie_in_lib['thumbnail']
+    li = xbmcgui.ListItem(movie['title'], iconImage=icon_image)
+    xbmcplugin.addDirectoryItem(handle=addon_handle, url='', listitem=li)
+
 args = urlparse.parse_qs(sys.argv[2][1:])
 mode = args.get('mode', None)
 # Menu to choose movies or shows
@@ -72,14 +80,15 @@ elif mode[0] == 'folder':
     folder_name = args['foldername'][0]
     if folder_name == 'movies':
         movie_watchlist = moviedb.get_sorted_movie_watchlist(session_id)
+        movies_in_library = library.get_movies()
         for movie in movie_watchlist:
-            li = xbmcgui.ListItem(movie['title'], iconImage='DefaultVideo.png')
-            xbmcplugin.addDirectoryItem(handle=addon_handle, url='', listitem=li)
+            add_movie_to_list(movie, movies_in_library)
     elif folder_name == 'shows':
         tv_watchlist = moviedb.get_sorted_tv_watchlist(session_id)
         for tv in tv_watchlist:
             li = xbmcgui.ListItem(tv['name'], iconImage='DefaultVideo.png')
             xbmcplugin.addDirectoryItem(handle=addon_handle, url='', listitem=li)
 
-xbmcgui.Dialog().ok(__addonname__, library.get_movies())
+# for movie in library.get_movies()['result']['movies']:
+#     xbmcgui.Dialog().ok(__addonname__, json.dumps(movie))
 xbmcplugin.endOfDirectory(addon_handle)
