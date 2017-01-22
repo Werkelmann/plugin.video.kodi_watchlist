@@ -41,9 +41,7 @@ def authenticate():
                             + ' from your browser and validate the token')
         try:
             session_id = moviedb.get_session_id(req_tok)
-            xbmcgui.Dialog().ok(__addonname__, 'Save the following to your settings: ' + session_id
-                                + ". Then restart the plugin")
-            xbmcplugin.endOfDirectory(addon_handle)
+            xbmcaddon.Addon().setSetting(SETTING_SESSION_ID, session_id)
         except urllib2.HTTPError:
             xbmcgui.Dialog().ok(__addonname__, 'Token was not successfully allowed')
             xbmcplugin.endOfDirectory(addon_handle)
@@ -59,7 +57,7 @@ def add_movie_to_list(movie, movies_in_library):
     icon_image = 'DefaultVideo.png'
     path_to_file = ''
     for movie_in_lib in movies_in_library['result']['movies']:
-        if SeqMatcher(None, movie['title'], movie_in_lib['title']).ratio() > 0.9:
+        if movie['title'] == movie_in_lib['title']:
             icon_image = movie_in_lib['thumbnail']
             path_to_file = movie_in_lib['file']
     li = xbmcgui.ListItem(movie['title'], thumbnailImage=icon_image, path=path_to_file)
@@ -80,6 +78,7 @@ args = urlparse.parse_qs(sys.argv[2][1:])
 mode = args.get('mode', None)
 # Menu to choose movies or shows
 if mode is None:
+    xbmcaddon.Addon().setSetting('test', 'test')
     authenticate()
     movies_url = build_url({'mode': 'folder', 'foldername': 'movies'})
     movies_li = xbmcgui.ListItem('Movies', iconImage='DefaultMovies.png')
@@ -103,6 +102,4 @@ elif mode[0] == 'folder':
         for show in tv_watchlist:
             add_show_to_list(show, shows_in_library)
 
-# for movie in library.get_movies()['result']['movies']:
-# xbmcgui.Dialog().ok(__addonname__, json.dumps(library.get_shows()))
 xbmcplugin.endOfDirectory(addon_handle)

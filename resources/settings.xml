@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
     <category label="TheMovieDB">
-        <setting label="ID" type="text" id="session_id" default=""/>
+        <setting label="ID" type="text" id="session_id" default="" option="hidden"/>
     </category>
 </settings>
